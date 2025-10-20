@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { carApi, Car } from '@/lib/api';
@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, Edit, Trash2, Upload, X } from 'lucide-react';
+import { Plus, Edit, Trash2, X } from 'lucide-react';
 
 export default function AdminDashboard() {
   const { user, getUserRole, loading: authLoading } = useAuth();
@@ -39,6 +39,21 @@ export default function AdminDashboard() {
     status: 'available',
   });
 
+  const fetchCars = useCallback(async () => {
+    try {
+      const data = await carApi.getAllCars();
+      setCars(data);
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch cars",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
   useEffect(() => {
     if (!authLoading) {
       if (!user) {
@@ -54,22 +69,7 @@ export default function AdminDashboard() {
         fetchCars();
       }
     }
-  }, [user, authLoading]);
-
-  const fetchCars = async () => {
-    try {
-      const data = await carApi.getAllCars();
-      setCars(data);
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch cars",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, authLoading, getUserRole, router, toast, fetchCars]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -80,11 +80,10 @@ export default function AdminDashboard() {
       const result = await carApi.uploadImage(file);
       setFormData({ ...formData, imageUrl: result.url });
       toast({
-        variant: "success" as any,
         title: "Success",
         description: "Image uploaded successfully",
       });
-    } catch (error: any) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Error",
@@ -103,14 +102,12 @@ export default function AdminDashboard() {
       if (editingCar) {
         await carApi.updateCar(editingCar.id!, formData);
         toast({
-          variant: "success" as any,
           title: "Success",
           description: "Car updated successfully",
         });
       } else {
         await carApi.createCar(formData);
         toast({
-          variant: "success" as any,
           title: "Success",
           description: "Car added successfully",
         });
@@ -118,11 +115,14 @@ export default function AdminDashboard() {
       
       resetForm();
       fetchCars();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error 
+        ? (error as { response?: { data?: { error?: string } } }).response?.data?.error 
+        : "Failed to save car";
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.response?.data?.error || "Failed to save car",
+        description: errorMessage || "Failed to save car",
       });
     } finally {
       setLoading(false);
@@ -141,12 +141,11 @@ export default function AdminDashboard() {
     try {
       await carApi.deleteCar(id);
       toast({
-        variant: "success" as any,
         title: "Success",
         description: "Car deleted successfully",
       });
       fetchCars();
-    } catch (error: any) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Error",

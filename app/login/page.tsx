@@ -44,7 +44,6 @@ export default function LoginPage() {
         const isAdmin = userRole === 'admin';
         
         toast({
-          variant: "success" as any,
           title: "Login Successful!",
           description: isAdmin 
             ? "Welcome Admin! Redirecting to dashboard..." 
@@ -56,7 +55,7 @@ export default function LoginPage() {
           router.push(isAdmin ? '/admin' : '/');
         }, 1500);
       }
-    } catch (error: any) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Error",
@@ -121,7 +120,7 @@ export default function LoginPage() {
             </Button>
           </form>
           <div className="mt-6 text-center text-sm">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link href="/signup" className="font-semibold text-blue-600 hover:text-purple-600 transition-colors underline-offset-4 hover:underline">
               Sign up
             </Link>

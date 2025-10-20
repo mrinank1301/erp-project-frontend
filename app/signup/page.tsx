@@ -55,7 +55,6 @@ export default function SignUpPage() {
         });
       } else {
         toast({
-          variant: "success" as any,
           title: "Success",
           description: "Email sent, complete verification to login",
         });
@@ -63,7 +62,7 @@ export default function SignUpPage() {
           router.push('/login');
         }, 2000);
       }
-    } catch (error: any) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Error",
